@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# scan.sh — Mechanical repo scanner for the read-repo skill
+# scan.sh — Best-effort data-collection accelerator for the read-repo skill
 # Usage: bash scan.sh [repo-path]
-# Output goes to stdout for the agent to read
+# Output goes to stdout for the agent to read.
+# This script is NOT authoritative — the agent's Phase 2 deep read is.
 
 set -euo pipefail
 
@@ -10,42 +11,64 @@ REPO="$(cd "$REPO" && pwd)"
 
 HR="━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+# Single unified exclusion list used by both tree and find
+EXCLUDE_DIRS="node_modules|.git|__pycache__|.pytest_cache|dist|build|.next|.nuxt|target|*.pyc|*.class|.DS_Store|vendor|venv|.venv|coverage|.nyc_output"
+# find-compatible prune expression (derived from same list)
+find_prune() {
+  echo \( \
+    -name "node_modules" -o -name ".git" -o -name "__pycache__" \
+    -o -name ".pytest_cache" -o -name "dist" -o -name "build" \
+    -o -name ".next" -o -name ".nuxt" -o -name "target" \
+    -o -name "vendor" -o -name "venv" -o -name ".venv" \
+    -o -name "coverage" -o -name ".nyc_output" \
+  \)
+}
+
 echo "$HR"
 echo "REPO SCAN: $REPO"
 echo "Scanned at: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+echo "Note: best-effort scan — Phase 2 deep read is authoritative"
 echo "$HR"
 
 # ── 1. Directory tree ──────────────────────────────────────────────────────────
 echo ""
-echo "## DIRECTORY TREE (depth 3, excluding common noise)"
+echo "## DIRECTORY TREE (depth 3)"
 echo ""
 if command -v tree &>/dev/null; then
-  tree "$REPO" -L 3 \
-    --dirsfirst \
-    -I 'node_modules|.git|__pycache__|.pytest_cache|dist|build|.next|.nuxt|target|*.pyc|*.class|.DS_Store|vendor|venv|.venv|coverage|.nyc_output' \
-    2>/dev/null || true
+  tree "$REPO" -L 3 --dirsfirst -I "$EXCLUDE_DIRS" 2>/dev/null || true
 else
-  find "$REPO" -maxdepth 3 \
-    \( -name node_modules -o -name .git -o -name __pycache__ \
-       -o -name dist -o -name build -o -name target -o -name vendor \
-       -o -name venv -o -name .venv \) -prune \
+  find "$REPO" -maxdepth 3 $(find_prune) -prune \
     -o -print | sed "s|$REPO||" | sort
 fi
 
-# ── 2. Language detection ──────────────────────────────────────────────────────
+# ── 2. Language detection (by file count) ─────────────────────────────────────
 echo ""
-echo "## LANGUAGE BREAKDOWN (by file count)"
+echo "## LANGUAGE BREAKDOWN (by file count, not line count)"
 echo ""
-find "$REPO" \
-  \( -path "*/.git" -o -path "*/node_modules" -o -path "*/__pycache__" \
-     -o -path "*/dist" -o -path "*/build" -o -path "*/target" \
-     -o -path "*/vendor" -o -path "*/.venv" -o -path "*/venv" \) -prune \
+find "$REPO" $(find_prune) -prune \
   -o -type f -name "*.*" -print \
   | grep -oE '\.[a-zA-Z0-9]+$' \
   | sort | uniq -c | sort -rn \
   | head -25
 
-# ── 3. Manifest / dependency files ────────────────────────────────────────────
+# ── 3. Monorepo signals ────────────────────────────────────────────────────────
+echo ""
+echo "## MONOREPO SIGNALS"
+echo ""
+for f in lerna.json pnpm-workspace.yaml nx.json rush.json turbo.json; do
+  [ -f "$REPO/$f" ] && echo "  FOUND: $f"
+done
+for d in packages apps services; do
+  if [ -d "$REPO/$d" ]; then
+    count=$(find "$REPO/$d" -maxdepth 2 -name "package.json" -o -name "go.mod" -o -name "Cargo.toml" -o -name "pyproject.toml" 2>/dev/null | wc -l | tr -d ' ')
+    [ "$count" -gt 1 ] && echo "  FOUND: $d/ with $count package manifests"
+  fi
+done
+if grep -q '"workspaces"' "$REPO/package.json" 2>/dev/null; then
+  echo "  FOUND: workspaces field in root package.json"
+fi
+
+# ── 4. Manifest / dependency files ────────────────────────────────────────────
 echo ""
 echo "## MANIFEST & DEPENDENCY FILES"
 echo ""
@@ -67,11 +90,10 @@ MANIFESTS=(
 )
 
 for pattern in "${MANIFESTS[@]}"; do
-  # Use find to handle glob patterns
   while IFS= read -r f; do
+    [ -f "$f" ] || continue
     rel="${f#$REPO/}"
     echo "### $rel"
-    # Print first 60 lines, enough for deps section
     head -60 "$f" 2>/dev/null
     echo ""
   done < <(find "$REPO" -maxdepth 3 -name "$pattern" \
@@ -79,7 +101,7 @@ for pattern in "${MANIFESTS[@]}"; do
     2>/dev/null | sort)
 done
 
-# ── 4. Entry points ───────────────────────────────────────────────────────────
+# ── 5. Entry points ───────────────────────────────────────────────────────────
 echo ""
 echo "## ENTRY POINTS (candidates)"
 echo ""
@@ -88,13 +110,15 @@ ENTRY_PATTERNS=(
   "index.js" "index.ts" "index.tsx"
   "app.py" "app.js" "app.ts" "app.tsx"
   "server.py" "server.js" "server.ts"
-  "manage.py"
+  "manage.py" "wsgi.py" "asgi.py"
   "Program.cs"
   "Application.java" "Main.java"
+  "config.ru"
 )
 
 for pattern in "${ENTRY_PATTERNS[@]}"; do
   while IFS= read -r f; do
+    [ -f "$f" ] || continue
     rel="${f#$REPO/}"
     echo "### $rel"
     head -30 "$f" 2>/dev/null
@@ -105,17 +129,16 @@ for pattern in "${ENTRY_PATTERNS[@]}"; do
     -maxdepth 5 2>/dev/null | sort)
 done
 
-# Also check cmd/ directory (Go pattern)
 if [ -d "$REPO/cmd" ]; then
   echo "### cmd/ (Go entry points)"
-  find "$REPO/cmd" -name "*.go" | head -5 | while read -r f; do
+  find "$REPO/cmd" -name "*.go" 2>/dev/null | head -5 | while read -r f; do
     echo "#### ${f#$REPO/}"
     head -20 "$f"
     echo ""
   done
 fi
 
-# ── 5. Config & infra files ───────────────────────────────────────────────────
+# ── 6. Config & infra files ───────────────────────────────────────────────────
 echo ""
 echo "## CONFIG & INFRASTRUCTURE FILES"
 echo ""
@@ -132,27 +155,29 @@ CONFIG_PATTERNS=(
 
 for pattern in "${CONFIG_PATTERNS[@]}"; do
   while IFS= read -r f; do
-    rel="${f#$REPO/}"
-    # Skip if find returned the repo dir itself (pattern edge case)
     [ -f "$f" ] || continue
+    rel="${f#$REPO/}"
     echo "### $rel"
     head -40 "$f" 2>/dev/null
     echo ""
-  done < <(find "$REPO" -maxdepth 5 -name "$(basename "$pattern")" \
+  done < <(find "$REPO" -maxdepth 5 -name "$pattern" \
     ! -path "*/.git/*" ! -path "*/node_modules/*" \
     2>/dev/null | sort | head -3)
 done
 
-# GitHub Actions (needs path filter, can't use simple -name)
-while IFS= read -r f; do
-  rel="${f#$REPO/}"
-  echo "### $rel"
-  head -40 "$f" 2>/dev/null
-  echo ""
-done < <(find "$REPO/.github/workflows" -maxdepth 1 -name "*.yml" -o -name "*.yaml" \
-  2>/dev/null | sort | head -5)
+# GitHub Actions
+if [ -d "$REPO/.github/workflows" ]; then
+  while IFS= read -r f; do
+    [ -f "$f" ] || continue
+    rel="${f#$REPO/}"
+    echo "### $rel"
+    head -40 "$f" 2>/dev/null
+    echo ""
+  done < <(find "$REPO/.github/workflows" -maxdepth 1 \( -name "*.yml" -o -name "*.yaml" \) \
+    2>/dev/null | sort | head -5)
+fi
 
-# ── 6. Test directories ───────────────────────────────────────────────────────
+# ── 7. Test directories ───────────────────────────────────────────────────────
 echo ""
 echo "## TEST STRUCTURE"
 echo ""
@@ -162,10 +187,11 @@ find "$REPO" -maxdepth 4 -type d \
   ! -path "*/node_modules/*" ! -path "*/.git/*" \
   2>/dev/null | sort | while read -r d; do
   echo "  ${d#$REPO/}/"
-  ls "$d" | head -8 | sed 's/^/    /'
+  ls "$d" 2>/dev/null | head -8 | sed 's/^/    /'
   echo ""
 done
 
 echo "$HR"
 echo "END OF SCAN"
 echo "$HR"
+
