@@ -14,8 +14,7 @@ Install this skill and your Copilot CLI agent can:
 ## Install
 
 ```bash
-# Clone into your skills directory
-git clone https://github.com/YOUR_USERNAME/read-repo ~/.agents/skills/read-repo
+npx skills add T3QC0LU/read-repo
 ```
 
 That's it. The skill is auto-discovered next time you start Copilot CLI.
