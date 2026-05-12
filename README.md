@@ -1,15 +1,15 @@
 # read-repo
 
-> A Copilot CLI skill that deep-analyzes a local code repository and generates structured documentation.
+> A Copilot CLI skill that deep-analyzes a local code repository and generates structured documentation， it can help you to learn new repos.
 
 ## What it does
 
 Install this skill and your Copilot CLI agent can:
 
-- 🔍 **Analyze** any local codebase — tech stack, languages, architecture, folder responsibilities, core patterns
-- 📄 **Generate** ready-to-commit markdown docs: `READREPO.md`, `ARCHITECTURE.md`, `TECH-STACK.md`, `FOLDER-GUIDE.md`, `ONBOARDING.md`
-- 🗺️ **Map** every folder to its responsibility
-- 💡 **Surface** non-obvious architectural decisions and core insights
+-  **Analyze** any local codebase — tech stack, languages, architecture, folder responsibilities, core patterns
+-  **Generate** ready-to-commit markdown docs: `READREPO.md`, `ARCHITECTURE.md`, `TECH-STACK.md`, `FOLDER-GUIDE.md`, `ONBOARDING.md`
+-  **Map** every folder to its responsibility
+-  **Surface** non-obvious architectural decisions and core insights
 
 ## Install
 
