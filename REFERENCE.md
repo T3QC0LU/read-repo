@@ -34,9 +34,9 @@ For learners who want to understand how a project works.
 
 {Data flow narrative — follow the path from user input to output. Be concrete.}
 
-```
-{ASCII data flow diagram}
-[entry point] → [processing layer] → [storage / output]
+```mermaid
+flowchart LR
+    A[Entry Point] --> B[Processing Layer] --> C[Storage / Output]
 ```
 
 ## Where to Start Reading
@@ -111,13 +111,11 @@ For developers who are inheriting or joining an existing codebase.
 
 {Pattern name} ⚠️ inferred — {one-sentence justification}
 
+```mermaid
+graph TD
+    A[Component A] --> B[Component B]
+    A --> C[Component C]
 ```
-{ASCII component diagram}
-```
-
-→ See [ARCHITECTURE.md](ARCHITECTURE.md) for full breakdown.
-
-## Known Pitfalls
 
 Things that have bitten people before or that look wrong but are intentional:
 
@@ -184,9 +182,10 @@ Values that are not configurable and that you'll need to change if forking:
 
 How the key modules depend on each other:
 
-```
-{module A} → {module B} → {module C}
-{module D} (isolated)
+```mermaid
+graph LR
+    A[module A] --> B[module B] --> C[module C]
+    D[module D]
 ```
 
 → See [ARCHITECTURE.md](ARCHITECTURE.md) for full breakdown.
@@ -221,11 +220,11 @@ How the key modules depend on each other:
 
 ## Component Map
 
+```mermaid
+graph TD
+    A[Component A] --> B[Component B]
+    A --> C[Component C]
 ```
-{ASCII component diagram}
-```
-
-## Data Flow
 
 1. {Step}: {description}
 2. …

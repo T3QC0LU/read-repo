@@ -81,7 +81,7 @@ FEATURES (user-facing or API capabilities)
 
 ARCHITECTURE
   Pattern:            (MVC / hexagonal / microservices / monolith / event-driven / …)
-  Data flow:          [entry] → [processing] → [output]
+  Data flow:          Use Mermaid — flowchart LR for data flows, graph TD for component hierarchies, graph LR for dependency maps
 
 FOLDER MAP
   /dir   → responsibility (2 lines max per folder)
@@ -141,3 +141,17 @@ After analysis, always respond with:
 - For unknown languages: use file extensions + syntax clues, mark as `⚠️ inferred`
 - If user changes mode after generation, re-generate — do not merge two modes into one document
 - For unknown frameworks: check import statements and config file conventions
+
+## Diagram conventions
+
+Always use Mermaid — never ASCII art. Use the right diagram type for the content:
+
+| Content | Mermaid type | Example |
+|---|---|---|
+| Data flow (left → right) | `flowchart LR` | request → handler → DB |
+| Component hierarchy (top → down) | `graph TD` | App → Services → Repos |
+| Module dependency map | `graph LR` | moduleA → moduleB |
+| Request / response sequence | `sequenceDiagram` | Client → Server: GET /api |
+
+Use short node labels. Keep diagrams ≤10 nodes — split into sub-diagrams if larger.
+GitHub and VS Code both render Mermaid natively inside ` ```mermaid ` blocks.
