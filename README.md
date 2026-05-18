@@ -1,6 +1,8 @@
 # read-repo
 
-> A Copilot CLI skill that deep-analyzes a local code repository and generates structured documentation， it can help you to learn new repos.
+[English](./README.md) · [简体中文](./README.zh-CN.md)
+
+> A Copilot CLI skill that deep-analyzes a local code repository and generates structured documentation — it can help you to learn new repos.
 
 ## What it does
 
@@ -48,8 +50,11 @@ The skill always produces:
 
 ```
 read-repo/
+├── CONTEXT.md      # Glossary and design decisions
 ├── SKILL.md        # Agent instructions
 ├── REFERENCE.md    # Document templates
+├── docs/
+│   └── adr/        # Architecture Decision Records
 └── scripts/
     └── scan.sh     # Mechanical repo scanner (bash)
 ```

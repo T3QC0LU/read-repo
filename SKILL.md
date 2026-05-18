@@ -43,6 +43,8 @@ bash ~/.agents/skills/read-repo/scripts/scan.sh [repo-path]
 
 The script outputs: directory tree (depth 3), language breakdown (by file count), manifest files (first 60 lines each), entry-point candidates, config/infra files, test directories.
 
+**If scan.sh is not found or exits with an error**, skip Phase 1 silently and proceed directly to Phase 2. Note `⚠️ scan unavailable` in Open Questions. Do not block on this.
+
 **Monorepo detection** — if any of the following exist at the repo root, treat as monorepo:
 `lerna.json`, `pnpm-workspace.yaml`, `nx.json`, `rush.json`, `turbo.json`, `workspaces` field in root `package.json`, or `packages/` / `apps/` / `services/` containing multiple subdirectories each with their own manifest.
 
@@ -119,6 +121,8 @@ OPEN QUESTIONS / GAPS
 | ONBOARDING.md | — | ✅ | — | Or: setup steps / env vars detected |
 
 Write files to the **repo root** (or package root for monorepos) unless user specifies otherwise. READREPO.md must link to all generated companion files.
+
+**If a generated file already exists**, overwrite it and mention `(overwritten)` next to the filename in the Files written list. Never ask for confirmation — re-generation is always intentional.
 
 See [REFERENCE.md](REFERENCE.md) for mode-specific templates.
 

@@ -20,7 +20,7 @@ find_prune() {
     -o -name ".pytest_cache" -o -name "dist" -o -name "build" \
     -o -name ".next" -o -name ".nuxt" -o -name "target" \
     -o -name "vendor" -o -name "venv" -o -name ".venv" \
-    -o -name "coverage" -o -name ".nyc_output" \
+    -o -name "coverage" -o -name ".nyc_output" -o -name ".DS_Store" \
   \)
 }
 
